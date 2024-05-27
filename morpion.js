@@ -23,19 +23,33 @@ class Morpion {
 				this.getCell(x, y).onclick = () => {
                     // console.log("init game, human turn");
                     console.log("x: ", x,"y :", y);
+                    undoButton.disabled = false;
 					this.doPlayHuman(x, y);
 				};
 			});
 		});
 
         let undoButton = document.getElementById("undo")
+        // if(this.turn <= 0 ){
+        //     undoButton.disabled = true;
+        // }
         undoButton.onclick = () => {
-            console.log("undo");
-            this.undo()
+            if(this.turn <= 0 ){
+                console.log("turn <= 0");
+                return;
+            }
+            this.undo();
         }
         let redoButton = document.getElementById("redo")
+        // if(this.turn >= 8 ){
+        //     redoButton.disabled = true;
+        // }
         redoButton.onclick = () => {
-            console.log("redo");
+            if(this.history.length <= this.turn){
+                console.log("this.history.length <= this.turn");
+                return;
+            }
+            this.redo();
         }
 
 		if (this.iaPlayer === 'J1') {
@@ -155,22 +169,36 @@ class Morpion {
 
     undo = () => {
         console.log("dans undo");
-        console.log(this.history.length);
-        console.log("turn :", this.turn);
+        // console.log(this.history.length);
+        console.log("actual turn :", this.turn);
         if(this.history.length > 0 && this.turn > 0){
             this.turn -= 1;
             let x = this.history[this.turn].x
             let y = this.history[this.turn].y
             let player = this.history[this.turn].player
-            console.log("history :", "x :",x, "y :",y);
-            this.gridMap[y][x] = null
-            this.getCell(x, y).classList.remove(`filled-${player}`);
-
+            console.log("previous move :", "x :",x, "y :",y);
+            this.gridMap[y][x] = null //delete previous move in the right cell
+            this.getCell(x, y).classList.remove(`filled-${player}`); //change previous cell display
+            console.log("history :");
+            console.log(this.history);
         }
     }
 
     redo = () => {
-        
+        console.log("dans redo");
+        console.log("actual turn :", this.turn);
+        if(this.history.length > this.turn){
+            
+            let x = this.history[this.turn].x
+            let y = this.history[this.turn].y
+            let player = this.history[this.turn].player
+            console.log("history :", "x :",x, "y :",y);
+            this.gridMap[y][x] = player
+            this.getCell(x, y).classList.add(`filled-${player}`);
+            console.log("history :");
+            console.log(this.history);
+            this.turn += 1; //at the end because we change turn only after redo
+        }
     }
 
 	doPlayHuman = (x, y) => {
