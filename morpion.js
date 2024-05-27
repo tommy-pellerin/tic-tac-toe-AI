@@ -245,7 +245,7 @@ class Morpion {
                 ({ x, y } = this.easy(this.gridMap))
                 break;
             case "medium":
-                console.log("medium");
+                ({ x, y } = this.medium(this.gridMap))
                 break;
             case "hard":
                 ({ x, y } = this.minmax(this.gridMap, 0, -Infinity, Infinity, true))
@@ -265,9 +265,51 @@ class Morpion {
         do {
             x = Math.floor(Math.random() * 3);
             y = Math.floor(Math.random() * 3);
-        } while(board[y][x] !== null);
+        } while(board[y][x] !== null); //while the cell is not empty, keep changing x and y value
 
         return {x, y};
+    }
+
+    checkDoublePion = (board) => {
+        let x,y;
+        const isWinningRow = (row) => {
+            if(row[0] === row[1] && row[0] !== null && row[2] === null) return 2;
+            if(row[0] === row[2] && row[0] !== null && row[1] === null) return 1;
+            if(row[1] === row[2] && row[1] !== null && row[0] === null) return 0;
+            return -1;
+        };
+    
+        // Horizontal
+        for(let y = 0; y < 3; y++) {
+            let x = isWinningRow(board[y]);
+            if(x !== -1) return {x, y};
+        }
+    
+        // Vertical
+        for(let x = 0; x < 3; x++) {
+            let y = isWinningRow([board[0][x], board[1][x], board[2][x]]);
+            if(y !== -1) return {x, y};
+        }
+
+        // Diagonal
+        const diagonal1 = [board[0][0], board[1][1], board[2][2]];
+        const diagonal2 = [board[0][2], board[1][1], board[2][0]];
+        let diag = isWinningRow(diagonal1);
+        if(diag !== -1) return {x: diag, y: diag};
+
+        diag = isWinningRow(diagonal2);
+        if(diag !== -1) return {x: 2 - diag, y: diag};
+
+        // If no winning move is found, return null
+        return null;
+    }
+    medium = (board) => {
+        const winningMove = this.checkDoublePion(board);
+        if(winningMove) {
+            return winningMove;
+        } else {
+            return this.easy(board);
+        }
     }
 
     minmax = (board, depth, alpha, beta, isMaximizing) => {
