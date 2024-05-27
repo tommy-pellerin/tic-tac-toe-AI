@@ -36,21 +36,25 @@ class Morpion {
 
         //init undobutton
         let undoButton = document.getElementById("undo")
-        // if(this.turn <= 0 ){
-        //     undoButton.disabled = true;
-        // }
+        if(this.turn <= 0 ){
+            undoButton.classList.add("undo-redo-disable")
+            undoButton.disabled = true;
+        }
         undoButton.onclick = () => {
             if(this.turn <= 0 ){
                 console.log("turn <= 0");
                 return;
             }
             this.undo();
+            redoButton.disabled = false;
+            redoButton.classList.remove("undo-redo-disable")
         }
         //init redobutton
         let redoButton = document.getElementById("redo")
-        // if(this.turn >= 8 ){
-        //     redoButton.disabled = true;
-        // }
+        if(this.history.length <= this.turn){
+            redoButton.classList.add("undo-redo-disable")
+            redoButton.disabled = true;
+        }
         redoButton.onclick = () => {
             if(this.history.length <= this.turn){
                 console.log("this.history.length <= this.turn");
@@ -62,18 +66,27 @@ class Morpion {
         //init level selecting
         const easyButton = document.getElementById("easylvl")
         easyButton.addEventListener("click",()=>{
-            console.log("easy");
+            // console.log("easy");
             this.difficulty = "easy"
+            easyButton.classList.add("selected-difficulty")
+            mediumButton.classList.remove("selected-difficulty")
+            hardButton.classList.remove("selected-difficulty")
         })
         const mediumButton = document.getElementById("mediumlvl")
         mediumButton.addEventListener("click",()=>{
-            console.log("medium");
+            // console.log("medium");
             this.difficulty = "medium"
+            easyButton.classList.remove("selected-difficulty")
+            mediumButton.classList.add("selected-difficulty")
+            hardButton.classList.remove("selected-difficulty")
         })
         const hardButton = document.getElementById("hardlvl")
         hardButton.addEventListener("click",()=>{
-            console.log("hard");
+            // console.log("hard");
             this.difficulty = "hard"
+            easyButton.classList.remove("selected-difficulty")
+            mediumButton.classList.remove("selected-difficulty")
+            hardButton.classList.add("selected-difficulty")
         })
         
 
@@ -83,6 +96,7 @@ class Morpion {
                     // console.log("init game, human turn");
                     console.log("x: ", x,"y :", y);
                     undoButton.disabled = false;
+                    undoButton.classList.remove("undo-redo-disable")
 					this.doPlayHuman(x, y);
 				};
 			});
