@@ -19,16 +19,20 @@ class Morpion {
 	}
 
 	initGame = () => {
-		this.gridMap.forEach((line, y) => {
-			line.forEach((cell, x) => {
-				this.getCell(x, y).onclick = () => {
-                    // console.log("init game, human turn");
-                    console.log("x: ", x,"y :", y);
-                    undoButton.disabled = false;
-					this.doPlayHuman(x, y);
-				};
-			});
-		});
+        console.log("init game");
+        const savedGridMap = JSON.parse(localStorage.getItem('tictactoe'));
+        if(savedGridMap && savedGridMap.difficulty !== null){
+            this.difficulty = savedGridMap.difficulty
+            this.gridMap = savedGridMap.board;
+            console.log(this.gridMap);
+            this.gridMap.forEach((line, y) => {
+                line.forEach((cell, x) => {
+                    console.log(cell,x,y);
+                    let player = cell
+                    this.getCell(x, y).classList.add(`filled-${player}`);
+                    });
+            });
+        };
 
         //init undobutton
         let undoButton = document.getElementById("undo")
@@ -71,6 +75,19 @@ class Morpion {
             console.log("hard");
             this.difficulty = "hard"
         })
+        
+
+		this.gridMap.forEach((line, y) => {
+			line.forEach((cell, x) => {
+				this.getCell(x, y).onclick = () => {
+                    // console.log("init game, human turn");
+                    console.log("x: ", x,"y :", y);
+                    undoButton.disabled = false;
+					this.doPlayHuman(x, y);
+				};
+			});
+		});
+
 
 		if (this.iaPlayer === 'J1') {
 			this.doPlayIa();
@@ -130,6 +147,9 @@ class Morpion {
         }
 
         this.gameOver = true;
+        console.log('Clearing local storage...');
+        localStorage.clear(); //clear local storage when the party is over
+        console.log('Local storage cleared.');
         switch(winner) {
             case 'tie':
                 this.displayEndMessage("Vous êtes à égalité !");
@@ -147,6 +167,7 @@ class Morpion {
 		const endMessageElement = document.getElementById('end-message');
 		endMessageElement.textContent = message;
 		endMessageElement.style.display = 'block';
+        console.log("fin message");
 	}
 
 	drawHit = (x, y, player) => { 
@@ -166,6 +187,18 @@ class Morpion {
         this.turn += 1;
 		this.getCell(x, y).classList.add(`filled-${player}`);
 		this.checkWinner(player);
+
+        //save in localStorage if the game is not over in order to resume the game
+        if (!this.gameOver) {
+            localStorage.setItem('tictactoe', 
+                JSON.stringify({
+                    board: this.gridMap,
+                    difficulty: this.difficulty
+                })
+            );
+            console.log('Game state saved to local storage.');
+        }
+
 		return true;
 	}
 
