@@ -4,6 +4,7 @@ class Morpion {
     turn = 0;
 	gameOver = false;
     history = [];
+    difficulty = "hard";
 
 	gridMap = [
 		[null, null, null],
@@ -58,14 +59,17 @@ class Morpion {
         const easyButton = document.getElementById("easylvl")
         easyButton.addEventListener("click",()=>{
             console.log("easy");
+            this.difficulty = "easy"
         })
         const mediumButton = document.getElementById("mediumlvl")
         mediumButton.addEventListener("click",()=>{
             console.log("medium");
+            this.difficulty = "medium"
         })
         const hardButton = document.getElementById("hardlvl")
         hardButton.addEventListener("click",()=>{
             console.log("hard");
+            this.difficulty = "hard"
         })
 
 		if (this.iaPlayer === 'J1') {
@@ -128,7 +132,7 @@ class Morpion {
         this.gameOver = true;
         switch(winner) {
             case 'tie':
-			    this.displayEndMessage("Vous êtes à égalité !");
+                this.displayEndMessage("Vous êtes à égalité !");
                 break;
             case this.iaPlayer:
                 this.displayEndMessage("L'IA a gagné !");
@@ -234,8 +238,22 @@ class Morpion {
 		if (this.gameOver) {
 			return;
 		}
-
-        const { x, y } = this.minmax(this.gridMap, 0, -Infinity, Infinity, true);
+        console.log("Difficulty chosen :",this.difficulty);
+        let x, y;
+        switch(this.difficulty){
+            case "easy":
+                console.log("easy");
+                break;
+            case "medium":
+                console.log("medium");
+                break;
+            case "hard":
+                ({ x, y } = this.minmax(this.gridMap, 0, -Infinity, Infinity, true))
+                break;
+            default:
+                console.log("unknown difficulty"); //difficulty hard by default
+        }
+        
         this.drawHit(x, y, this.iaPlayer);
         // console.log("fin ia turn");
 	}
