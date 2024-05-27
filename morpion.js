@@ -3,6 +3,7 @@ class Morpion {
 	iaPlayer = 'J2';
     turn = 0;
 	gameOver = false;
+    history = [];
 
 	gridMap = [
 		[null, null, null],
@@ -20,24 +21,36 @@ class Morpion {
 		this.gridMap.forEach((line, y) => {
 			line.forEach((cell, x) => {
 				this.getCell(x, y).onclick = () => {
+                    // console.log("init game, human turn");
+                    console.log("x: ", x,"y :", y);
 					this.doPlayHuman(x, y);
 				};
 			});
 		});
+
+        let undoButton = document.getElementById("undo")
+        undoButton.onclick = () => {
+            console.log("undo");
+            this.undo()
+        }
+        let redoButton = document.getElementById("redo")
+        redoButton.onclick = () => {
+            console.log("redo");
+        }
 
 		if (this.iaPlayer === 'J1') {
 			this.doPlayIa();
 		}
 	}
 
-	getCell = (x, y) => {
+	getCell = (x, y) => { //trouve le nom de la cellule écrit en html
 		const column = x + 1;
 		const lines = ['A', 'B', 'C'];
 		const cellId = `${lines[y]}${column}`;
 		return document.getElementById(cellId);
 	}
 
-    getBoardWinner = (board) => {
+    getBoardWinner = (board) => { //ici on cherche le gagnant => le fonction retourne soit : tie, iaPlayer ou humanPlayer
         const isWinningRow = ([a, b, c]) => (
             a !== null && a === b && b === c
         );
@@ -75,7 +88,8 @@ class Morpion {
         return isFull ? 'tie' : null;
     }
 
-	checkWinner = (lastPlayer) => {
+	checkWinner = (lastPlayer) => { //vérifier s'il y a un gagnant
+        
         const winner = this.getBoardWinner(this.gridMap);
         if (!winner) {
             return;
@@ -101,35 +115,85 @@ class Morpion {
 		endMessageElement.style.display = 'block';
 	}
 
-	drawHit = (x, y, player) => {
+	drawHit = (x, y, player) => { 
+        // console.log("drawhit");
 		if (this.gridMap[y][x] !== null) {
 			return false;
 		}
 
-		this.gridMap[y][x] = player;
+		this.gridMap[y][x] = player; //c'est ici  qu'on affecte la valeur du jouer dans la conne cellule
+        // console.log("gridmap :");
+        // console.log(this.gridMap);
+
+        this.saveHistory(this.turn, x,y,player)
+        console.log("history :");
+        console.log(this.history);
+
         this.turn += 1;
 		this.getCell(x, y).classList.add(`filled-${player}`);
 		this.checkWinner(player);
 		return true;
 	}
 
+    saveHistory = (turn,x,y,player) =>{
+        if(this.history[this.turn]){
+            this.history[this.turn] = {
+                turn:this.turn,
+                x:x,
+                y:y,
+                player:player
+            };
+        } else {
+            this.history.push({turn:turn,
+                x:x,
+                y:y,
+                player:player
+            })
+        }
+        console.log("turn :", this.turn);
+    }
+
+    undo = () => {
+        console.log("dans undo");
+        console.log(this.history.length);
+        console.log("turn :", this.turn);
+        if(this.history.length > 0 && this.turn > 0){
+            this.turn -= 1;
+            let x = this.history[this.turn].x
+            let y = this.history[this.turn].y
+            let player = this.history[this.turn].player
+            console.log("history :", "x :",x, "y :",y);
+            this.gridMap[y][x] = null
+            this.getCell(x, y).classList.remove(`filled-${player}`);
+
+        }
+    }
+
+    redo = () => {
+        
+    }
+
 	doPlayHuman = (x, y) => {
+        // console.log("human");
 		if (this.gameOver) {
 			return;
 		}
 
 		if (this.drawHit(x, y, this.humanPlayer)) {
+            // console.log("change de jouer");
 			this.doPlayIa();
 		}
 	}
 
 	doPlayIa = () => {
+        // console.log("AI");
 		if (this.gameOver) {
 			return;
 		}
 
         const { x, y } = this.minmax(this.gridMap, 0, -Infinity, Infinity, true);
         this.drawHit(x, y, this.iaPlayer);
+        // console.log("fin ia turn");
 	}
 
     minmax = (board, depth, alpha, beta, isMaximizing) => {

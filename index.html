@@ -11,11 +11,11 @@
         <h1 class="title">The Hacking Morpion</h1>
         <section class="game-grid">
             <div class="cell" id="A1"></div>
-            <div class="cell" id="A2"></div>
+            <div class="cell" id="A2">A2</div>
             <div class="cell" id="A3"></div>
 
             <div class="cell" id="B1"></div>
-            <div class="cell" id="B2"></div>
+            <div class="cell" id="B2">B2</div>
             <div class="cell" id="B3"></div>
 
             <div class="cell" id="C1"></div>
@@ -24,6 +24,10 @@
         </section>
         <section class="actions">
             <a class="replay-button" href="./index.html">Rejouer</a>
+            <div>
+                <button class="replay-button" id="undo">Undo</button>
+                <button class="replay-button" id="redo">Redo</button>
+            </div>
         </section>
         <div class="end-message" id="end-message"></div>
         <script src="./morpion.js"></script>
