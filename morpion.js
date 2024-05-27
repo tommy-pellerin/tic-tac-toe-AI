@@ -242,7 +242,7 @@ class Morpion {
         let x, y;
         switch(this.difficulty){
             case "easy":
-                console.log("easy");
+                ({ x, y } = this.easy(this.gridMap))
                 break;
             case "medium":
                 console.log("medium");
@@ -257,6 +257,18 @@ class Morpion {
         this.drawHit(x, y, this.iaPlayer);
         // console.log("fin ia turn");
 	}
+
+    easy = (board) => {
+        //check if the cell is empty
+        let x, y;
+
+        do {
+            x = Math.floor(Math.random() * 3);
+            y = Math.floor(Math.random() * 3);
+        } while(board[y][x] !== null);
+
+        return {x, y};
+    }
 
     minmax = (board, depth, alpha, beta, isMaximizing) => {
         // Return a score when there is a winner
