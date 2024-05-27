@@ -34,6 +34,12 @@ class Morpion {
             });
         };
 
+        let replayButton = document.getElementById("replay")
+        replayButton.addEventListener("click",()=>{
+            console.log("replay");
+            localStorage.clear();
+        })
+
         //init undobutton
         let undoButton = document.getElementById("undo")
         if(this.turn <= 0 ){
