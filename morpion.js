@@ -29,6 +29,7 @@ class Morpion {
 			});
 		});
 
+        //init undobutton
         let undoButton = document.getElementById("undo")
         // if(this.turn <= 0 ){
         //     undoButton.disabled = true;
@@ -40,6 +41,7 @@ class Morpion {
             }
             this.undo();
         }
+        //init redobutton
         let redoButton = document.getElementById("redo")
         // if(this.turn >= 8 ){
         //     redoButton.disabled = true;
@@ -51,6 +53,20 @@ class Morpion {
             }
             this.redo();
         }
+
+        //init level selecting
+        const easyButton = document.getElementById("easylvl")
+        easyButton.addEventListener("click",()=>{
+            console.log("easy");
+        })
+        const mediumButton = document.getElementById("mediumlvl")
+        mediumButton.addEventListener("click",()=>{
+            console.log("medium");
+        })
+        const hardButton = document.getElementById("hardlvl")
+        hardButton.addEventListener("click",()=>{
+            console.log("hard");
+        })
 
 		if (this.iaPlayer === 'J1') {
 			this.doPlayIa();
