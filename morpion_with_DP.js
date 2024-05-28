@@ -22,11 +22,16 @@ class Morpion {
 	initGame = () => {
         console.log("init game");
 
-        const savedGridMap = JSON.parse(localStorage.getItem('tictactoe'));
-        if(savedGridMap && savedGridMap.difficulty !== null){
-            this.difficulty = savedGridMap.difficulty
-            this.gridMap = savedGridMap.board;
+        const localStorageGridMap = JSON.parse(localStorage.getItem('tictactoe'));
+        if(localStorageGridMap && localStorageGridMap.difficulty !== null){
+            this.difficulty = localStorageGridMap.difficulty;
+            this.gridMap = localStorageGridMap.board;
+            let localStorageValues = localStorageGridMap.memento.values
+            localStorageValues.map(value => 
+                this.memento.addElement(JSON.parse(value))
+            );
             console.log(this.gridMap);
+            console.log(this.memento);
             this.gridMap.forEach((line, y) => {
                 line.forEach((cell, x) => {
                     // console.log(cell,x,y);
@@ -44,17 +49,20 @@ class Morpion {
 
         //init undobutton
         let undoButton = document.getElementById("undo")
-        if(this.turn <= 0 ){
-            undoButton.classList.add("undo-redo-disable")
-            undoButton.disabled = true;
+        if(this.memento.index > 0 ){
+            undoButton.classList.remove("undo-redo-disable")
+            undoButton.disabled = false;
         }
         undoButton.onclick = () => {
-            if(this.turn <= 0 ){
-                console.log("turn <= 0");
+            
+            if(this.memento.index <= 0 ){
+                console.log("this.memento.index <= 0");
+                undoButton.classList.add("undo-redo-disable")
+                // undoButton.disabled = true;
                 return;
             }
 
-            this.undo();
+            this.undo(undoButton);
             
             redoButton.disabled = false;
             redoButton.classList.remove("undo-redo-disable")
@@ -62,16 +70,21 @@ class Morpion {
 
         //init redobutton
         let redoButton = document.getElementById("redo")
-        if(this.memento.values.length <= this.turn){
-            redoButton.classList.add("undo-redo-disable")
-            redoButton.disabled = true;
+        if(this.memento.index < this.memento.values.length){
+            redoButton.classList.remove("undo-redo-disable")
+            redoButton.disabled = false;
         };
         redoButton.onclick = () => {
-            if(this.memento.values.length <= this.turn){
-                console.log("this.memento.values.length <= this.turn");
+            
+            if(this.memento.index >= this.memento.values.length){
+                console.log("this.memento.index >= this.memento.values.length");
+                redoButton.classList.add("undo-redo-disable")
+                // redoButton.disabled = true;
                 return;
             }
-            this.redo();
+            this.redo(redoButton);
+            undoButton.disabled = false;
+            undoButton.classList.remove("undo-redo-disable")
         };
 
         //init level selecting
@@ -125,8 +138,6 @@ class Morpion {
 		const cellId = `${lines[y]}${column}`;
 		return document.getElementById(cellId);
 	}
-
-    
 
 	checkWinner = (lastPlayer) => { //vérifier s'il y a un gagnant
         
@@ -187,7 +198,8 @@ class Morpion {
         localStorage.setItem('tictactoe', 
             JSON.stringify({
                 board: this.gridMap,
-                difficulty: this.difficulty
+                difficulty: this.difficulty,
+                memento:this.memento
             })
         );
         // console.log('Game state saved to local storage.');
@@ -196,7 +208,7 @@ class Morpion {
 		return true;
 	}
 
-    undo = () => {
+    undo = (undoButton) => {
         for (let i=0;i<=1;i++){
         // console.log("dans undo");
         this.turn -= 1;
@@ -209,21 +221,32 @@ class Morpion {
         this.gridMap[y][x] = null //delete previous move in the right cell
         this.getCell(x, y).classList.remove(`filled-${player}`); //change previous cell display
         }
+        //condition on button
+        if(this.memento.index <= 0 ){
+            console.log("this.memento.index <= 2");
+            undoButton.classList.add("undo-redo-disable")
+            // undoButton.disabled = true;
+        }
     }
 
-    redo = () => {
-      for (let i=0;i<=1;i++){
-        // console.log("dans redo");
-        console.log("actual turn :", this.turn);
-        let data = this.memento.redo()
-        let x = data.x
-        let y = data.y
-        let player = data.player
-        console.log("this move :", "x :",x, "y :",y);
-        this.gridMap[y][x] = player
-        this.getCell(x, y).classList.add(`filled-${player}`);
-        this.turn += 1; //at the end because we change turn only after redo
-      }
+    redo = (redoButton) => {
+        for (let i=0;i<=1;i++){
+            // console.log("dans redo");
+            console.log("actual turn :", this.turn);
+            let data = this.memento.redo()
+            let x = data.x
+            let y = data.y
+            let player = data.player
+            console.log("this move :", "x :",x, "y :",y);
+            this.gridMap[y][x] = player
+            this.getCell(x, y).classList.add(`filled-${player}`);
+            this.turn += 1; //at the end because we change turn only after redo
+        }
+        if(this.memento.index >= (this.memento.values.length - 1)){
+            console.log("this.memento.index >= this.memento.values.length");
+            redoButton.classList.add("undo-redo-disable")
+            // redoButton.disabled = true;
+        }
     }
 
 	doPlayHuman = (x, y) => {
@@ -268,91 +291,6 @@ class Morpion {
         // console.log("fin ia turn");
 	}
 
-    // minmax = (board, depth, alpha, beta, isMaximizing) => {
-    //     // Return a score when there is a winner
-    //     const winner = this.getBoardWinner(board);
-    //     if (winner === this.iaPlayer) {
-    //         return 10 - depth;
-    //     }
-    //     if (winner === this.humanPlayer) {
-    //         return depth - 10;
-    //     }
-    //     if (winner === 'tie' && this.turn === 9) {
-    //         return 0;
-    //     }
-
-    //     const getSimulatedScore = (x, y, player) => {
-    //         board[y][x] = player;
-    //         this.turn += 1;
-
-    //         const score = this.minmax(
-    //             board,
-    //             depth + 1,
-    //             alpha,
-    //             beta,
-    //             player === this.humanPlayer
-    //         );
-
-    //         board[y][x] = null;
-    //         this.turn -= 1;
-
-    //         return score;
-    //     };
-
-    //     // This tree is going to test every move still possible in game
-    //     // and suppose that the 2 players will always play there best move.
-    //     // The IA search for its best move by testing every combinations,
-    //     // and affects score to every node of the tree.
-    //     if (isMaximizing) {
-    //         // The higher is the score, the better is the move for the IA.
-    //         let bestIaScore = -Infinity;
-    //         let optimalMove;
-    //         for (const y of [0, 1, 2]) {
-    //             for (const x of [0, 1, 2]) {
-    //                 if (board[y][x]) {
-    //                     continue;
-    //                 }
-
-    //                 const score = getSimulatedScore(x, y, this.iaPlayer);
-    //                 if (score > bestIaScore) {
-    //                     bestIaScore = score;
-    //                     optimalMove = { x, y };
-    //                 }
-
-    //                 // clear useless branch of the algorithm tree
-    //                 // (optional but recommended)
-    //                 alpha = Math.max(alpha, score);
-    //                 if (beta <= alpha) {
-    //                     break;
-    //                 }
-    //             }
-    //         }
-
-    //         return (depth === 0) ? optimalMove : bestIaScore;
-    //     }
-
-    //     // The lower is the score, the better is the move for the player.
-    //     let bestHumanScore = Infinity;
-    //     for (const y of [0, 1, 2]) {
-    //         for (const x of [0, 1, 2]) {
-    //             if (board[y][x]) {
-    //                 continue;
-    //             }
-
-    //             const score = getSimulatedScore(x, y, this.humanPlayer);
-    //             bestHumanScore = Math.min(bestHumanScore, score);
-
-    //             // clear useless branch of the algorithm tree
-    //             // (optional but recommended)
-    //             beta = Math.min(beta, score);
-    //             if (beta <= alpha) {
-    //                 break;
-    //             }
-    //         }
-    //     }
-
-    //     return bestHumanScore;
-    // }
 };
 
 class GetBoardWinner {
@@ -415,8 +353,8 @@ class Memento {
     }
 
     // Add a getter for values
-    getValues() {
-      return this.values;
+    getElement = index => {
+        return JSON.parse(this.values[index]);
     }
 
     undo = () => {
