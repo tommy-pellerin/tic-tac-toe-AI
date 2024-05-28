@@ -3,7 +3,6 @@ class Morpion {
 	iaPlayer = 'J2';
     turn = 0;
 	gameOver = false;
-    history = [];
     difficulty = "hard";
     
 
@@ -60,19 +59,20 @@ class Morpion {
             redoButton.disabled = false;
             redoButton.classList.remove("undo-redo-disable")
         }
+
         //init redobutton
         let redoButton = document.getElementById("redo")
         if(this.memento.values.length <= this.turn){
             redoButton.classList.add("undo-redo-disable")
             redoButton.disabled = true;
-        }
+        };
         redoButton.onclick = () => {
             if(this.memento.values.length <= this.turn){
                 console.log("this.memento.values.length <= this.turn");
                 return;
             }
             this.redo();
-        }
+        };
 
         //init level selecting
         const easyButton = document.getElementById("easylvl")
@@ -205,56 +205,31 @@ class Morpion {
         // console.log("gridmap :");
         // console.log(this.gridMap);
 
-        // this.saveHistory(this.turn, x,y,player)
-        // console.log("history :");
-        // console.log(this.history);
+    this.turn += 1;
+    this.getCell(x, y).classList.add(`filled-${player}`);
+    this.checkWinner(player);
 
-        this.turn += 1;
-		this.getCell(x, y).classList.add(`filled-${player}`);
-		this.checkWinner(player);
+    //save history in memento
+    this.memento.addElement({turn:this.turn,
+        x:x,
+        y:y,
+        player:player
+    });
+    console.log(this.memento);
 
-        //save history in memento
-        this.memento.addElement({turn:this.turn,
-            x:x,
-            y:y,
-            player:player
-        })
-
-        console.log(this.memento);
-
-        //save in localStorage if the game is not over in order to resume the game
-        if (!this.gameOver) {
-            localStorage.setItem('tictactoe', 
-                JSON.stringify({
-                    board: this.gridMap,
-                    difficulty: this.difficulty
-                })
-            );
-            // console.log('Game state saved to local storage.');
-        }
+    //save in localStorage if the game is not over in order to resume the game
+    if (!this.gameOver) {
+        localStorage.setItem('tictactoe', 
+            JSON.stringify({
+                board: this.gridMap,
+                difficulty: this.difficulty
+            })
+        );
+        // console.log('Game state saved to local storage.');
+    }
 
 		return true;
 	}
-
-    saveHistory = (turn,x,y,player) =>{
-        if(this.history[this.turn]){
-            this.history[this.turn] = {
-                turn:this.turn,
-                x:x,
-                y:y,
-                player:player
-            };
-        } else {
-            this.history.push({turn:turn,
-                x:x,
-                y:y,
-                player:player
-            })
-        }
-        // console.log("turn :", this.turn);
-    }
-
-
 
     undo = () => {
         for (let i=0;i<=1;i++){
@@ -268,7 +243,6 @@ class Morpion {
         console.log("previous move :", "x :",x, "y :",y);
         this.gridMap[y][x] = null //delete previous move in the right cell
         this.getCell(x, y).classList.remove(`filled-${player}`); //change previous cell display
-
         }
     }
 
@@ -285,18 +259,6 @@ class Morpion {
         this.getCell(x, y).classList.add(`filled-${player}`);
         this.turn += 1; //at the end because we change turn only after redo
       }
-        // if(this.history.length > this.turn){
-            
-        //     let x = this.history[this.turn].x
-        //     let y = this.history[this.turn].y
-        //     let player = this.history[this.turn].player
-        //     console.log("history :", "x :",x, "y :",y);
-        //     this.gridMap[y][x] = player
-        //     this.getCell(x, y).classList.add(`filled-${player}`);
-        //     console.log("history :");
-        //     console.log(this.history);
-        //     this.turn += 1; //at the end because we change turn only after redo
-        // }
     }
 
 	doPlayHuman = (x, y) => {
@@ -318,12 +280,16 @@ class Morpion {
 		}
         // console.log("Difficulty chosen :",this.difficulty);
         let x, y;
+        let easyDifficulty = new EasyDifficulty();
+        let mediumDifficulty = new MediumDifficulty();
+        // let hardDifficulty = new HardDifficulty();
         switch(this.difficulty){
             case "easy":
-                ({ x, y } = this.easy(this.gridMap))
+                ({ x, y } = easyDifficulty.getRandomCoordinates(this.gridMap))
                 break;
             case "medium":
-                ({ x, y } = this.medium(this.gridMap))
+                // ({ x, y } = this.medium(this.gridMap))
+                ({ x, y } = mediumDifficulty.getCoordinates(this.gridMap))
                 break;
             case "hard":
                 ({ x, y } = this.minmax(this.gridMap, 0, -Infinity, Infinity, true))
@@ -336,59 +302,47 @@ class Morpion {
         // console.log("fin ia turn");
 	}
 
-    easy = (board) => {
-        //check if the cell is empty
-        let x, y;
-
-        do {
-            x = Math.floor(Math.random() * 3);
-            y = Math.floor(Math.random() * 3);
-        } while(board[y][x] !== null); //while the cell is not empty, keep changing x and y value
-
-        return {x, y};
-    }
-
-    checkDoublePion = (board) => {
-        let x,y;
-        const isWinningRow = (row) => {
-            if(row[0] === row[1] && row[0] !== null && row[2] === null) return 2;
-            if(row[0] === row[2] && row[0] !== null && row[1] === null) return 1;
-            if(row[1] === row[2] && row[1] !== null && row[0] === null) return 0;
-            return -1;
-        };
+    // checkDoublePion = (board) => {
+    //     let x,y;
+    //     const isWinningRow = (row) => {
+    //         if(row[0] === row[1] && row[0] !== null && row[2] === null) return 2;
+    //         if(row[0] === row[2] && row[0] !== null && row[1] === null) return 1;
+    //         if(row[1] === row[2] && row[1] !== null && row[0] === null) return 0;
+    //         return -1;
+    //     };
     
-        // Horizontal
-        for(let y = 0; y < 3; y++) {
-            let x = isWinningRow(board[y]);
-            if(x !== -1) return {x, y};
-        }
+    //     // Horizontal
+    //     for(let y = 0; y < 3; y++) {
+    //         let x = isWinningRow(board[y]);
+    //         if(x !== -1) return {x, y};
+    //     }
     
-        // Vertical
-        for(let x = 0; x < 3; x++) {
-            let y = isWinningRow([board[0][x], board[1][x], board[2][x]]);
-            if(y !== -1) return {x, y};
-        }
+    //     // Vertical
+    //     for(let x = 0; x < 3; x++) {
+    //         let y = isWinningRow([board[0][x], board[1][x], board[2][x]]);
+    //         if(y !== -1) return {x, y};
+    //     }
 
-        // Diagonal
-        const diagonal1 = [board[0][0], board[1][1], board[2][2]];
-        const diagonal2 = [board[0][2], board[1][1], board[2][0]];
-        let diag = isWinningRow(diagonal1);
-        if(diag !== -1) return {x: diag, y: diag};
+    //     // Diagonal
+    //     const diagonal1 = [board[0][0], board[1][1], board[2][2]];
+    //     const diagonal2 = [board[0][2], board[1][1], board[2][0]];
+    //     let diag = isWinningRow(diagonal1);
+    //     if(diag !== -1) return {x: diag, y: diag};
 
-        diag = isWinningRow(diagonal2);
-        if(diag !== -1) return {x: 2 - diag, y: diag};
+    //     diag = isWinningRow(diagonal2);
+    //     if(diag !== -1) return {x: 2 - diag, y: diag};
 
-        // If no winning move is found, return null
-        return null;
-    }
-    medium = (board) => {
-        const winningMove = this.checkDoublePion(board);
-        if(winningMove) {
-            return winningMove;
-        } else {
-            return this.easy(board);
-        }
-    }
+    //     // If no winning move is found, return null
+    //     return null;
+    // }
+    // medium = (board) => {
+    //     const winningMove = this.checkDoublePion(board);
+    //     if(winningMove) {
+    //         return winningMove;
+    //     } else {
+    //         return this.easy(board);
+    //     }
+    // }
 
     minmax = (board, depth, alpha, beta, isMaximizing) => {
         // Return a score when there is a winner
@@ -520,5 +474,72 @@ class Memento {
         let value = JSON.parse(this.values[this.index]);
         this.index++;
         return value;
+    }
+}
+
+class EasyDifficulty {
+    constructor() {
+        this.x;
+        this.y;
+    }
+
+    getRandomCoordinates = (board) => {
+        
+        do {
+                this.x = Math.floor(Math.random() * 3);
+                this.y = Math.floor(Math.random() * 3);
+        } while(board[this.y][this.x] !== null); //while the cell is not empty, keep changing x and y value
+
+        return {x:this.x, y:this.y};
+    }
+}
+
+class MediumDifficulty extends EasyDifficulty {
+    constructor() {
+        super()
+    }
+
+    checkDoublePion = (board) => {
+        let x,y;
+        const isWinningRow = (row) => {
+            if(row[0] === row[1] && row[0] !== null && row[2] === null) return 2;
+            if(row[0] === row[2] && row[0] !== null && row[1] === null) return 1;
+            if(row[1] === row[2] && row[1] !== null && row[0] === null) return 0;
+            return -1;
+        };
+    
+        // Horizontal
+        for(let y = 0; y < 3; y++) {
+            let x = isWinningRow(board[y]);
+            if(x !== -1) return {x, y};
+        }
+    
+        // Vertical
+        for(let x = 0; x < 3; x++) {
+            let y = isWinningRow([board[0][x], board[1][x], board[2][x]]);
+            if(y !== -1) return {x, y};
+        }
+
+        // Diagonal
+        const diagonal1 = [board[0][0], board[1][1], board[2][2]];
+        const diagonal2 = [board[0][2], board[1][1], board[2][0]];
+        let diag = isWinningRow(diagonal1);
+        if(diag !== -1) return {x: diag, y: diag};
+
+        diag = isWinningRow(diagonal2);
+        if(diag !== -1) return {x: 2 - diag, y: diag};
+
+        // If no winning move is found, return null
+        return null;
+    }
+
+    getCoordinates = (board) => {
+        console.log("dans medium");
+        const winningMove = this.checkDoublePion(board);
+        if(winningMove) {
+            return winningMove;
+        } else {
+            return this.getRandomCoordinates(board);
+        }
     }
 }
