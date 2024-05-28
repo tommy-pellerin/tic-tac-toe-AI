@@ -16,12 +16,13 @@ class Morpion {
 	constructor(firstPlayer = 'J1') {
 		this.humanPlayer = firstPlayer;
 		this.iaPlayer = (firstPlayer === 'J1') ? 'J2' : 'J1';
+    this.memento = new Memento(); //initialized this variable before initGame
 		this.initGame();
-        this.memento = new Memento();
 	}
 
 	initGame = () => {
         console.log("init game");
+
         const savedGridMap = JSON.parse(localStorage.getItem('tictactoe'));
         if(savedGridMap && savedGridMap.difficulty !== null){
             this.difficulty = savedGridMap.difficulty
@@ -61,13 +62,13 @@ class Morpion {
         }
         //init redobutton
         let redoButton = document.getElementById("redo")
-        if(this.history.length <= this.turn){
+        if(this.memento.values.length <= this.turn){
             redoButton.classList.add("undo-redo-disable")
             redoButton.disabled = true;
         }
         redoButton.onclick = () => {
-            if(this.history.length <= this.turn){
-                console.log("this.history.length <= this.turn");
+            if(this.memento.values.length <= this.turn){
+                console.log("this.memento.values.length <= this.turn");
                 return;
             }
             this.redo();
@@ -258,7 +259,6 @@ class Morpion {
     undo = () => {
         for (let i=0;i<=1;i++){
         // console.log("dans undo");
-        // console.log(this.history.length);
         this.turn -= 1;
         console.log("actual turn :", this.turn);
         let data = this.memento.undo()
@@ -269,35 +269,34 @@ class Morpion {
         this.gridMap[y][x] = null //delete previous move in the right cell
         this.getCell(x, y).classList.remove(`filled-${player}`); //change previous cell display
 
-        // if(this.history.length > 0 && this.turn > 0){
-        //     this.turn -= 1;
-        //     let x = this.history[this.turn].x
-        //     let y = this.history[this.turn].y
-        //     let player = this.history[this.turn].player
-        //     console.log("previous move :", "x :",x, "y :",y);
-        //     this.gridMap[y][x] = null //delete previous move in the right cell
-        //     this.getCell(x, y).classList.remove(`filled-${player}`); //change previous cell display
-        //     console.log("history :");
-        //     console.log(this.history);
-        // }
         }
     }
 
     redo = () => {
-        console.log("dans redo");
+      for (let i=0;i<=1;i++){
+        // console.log("dans redo");
         console.log("actual turn :", this.turn);
-        if(this.history.length > this.turn){
+        let data = this.memento.redo()
+        let x = data.x
+        let y = data.y
+        let player = data.player
+        console.log("this move :", "x :",x, "y :",y);
+        this.gridMap[y][x] = player
+        this.getCell(x, y).classList.add(`filled-${player}`);
+        this.turn += 1; //at the end because we change turn only after redo
+      }
+        // if(this.history.length > this.turn){
             
-            let x = this.history[this.turn].x
-            let y = this.history[this.turn].y
-            let player = this.history[this.turn].player
-            console.log("history :", "x :",x, "y :",y);
-            this.gridMap[y][x] = player
-            this.getCell(x, y).classList.add(`filled-${player}`);
-            console.log("history :");
-            console.log(this.history);
-            this.turn += 1; //at the end because we change turn only after redo
-        }
+        //     let x = this.history[this.turn].x
+        //     let y = this.history[this.turn].y
+        //     let player = this.history[this.turn].player
+        //     console.log("history :", "x :",x, "y :",y);
+        //     this.gridMap[y][x] = player
+        //     this.getCell(x, y).classList.add(`filled-${player}`);
+        //     console.log("history :");
+        //     console.log(this.history);
+        //     this.turn += 1; //at the end because we change turn only after redo
+        // }
     }
 
 	doPlayHuman = (x, y) => {
@@ -496,21 +495,30 @@ class Memento {
         this.index++;
     }
 
+    // Add a getter for values
+    getValues() {
+      return this.values;
+    }
+
     undo = () => {
         console.log("je suis dans undo");
         if (this.index <= 0) {
-            return false;
+          return false;
         }
         this.index--;
+        console.log("index:", this.index);
         this.isUndo = true;
         return JSON.parse(this.values[this.index]);
     }
 
     redo = () => {
-        if (this.index >= values.length) {
+      console.log("je suis dans redo");
+      console.log("index:", this.index);
+        if (this.index >= this.values.length) {
             return false;
         }
+        let value = JSON.parse(this.values[this.index]);
         this.index++;
-        return JSON.parse(this.values[this.index]);
+        return value;
     }
 }
