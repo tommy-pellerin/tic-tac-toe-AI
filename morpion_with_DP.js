@@ -15,7 +15,7 @@ class Morpion {
 	constructor(firstPlayer = 'J1') {
 		this.humanPlayer = firstPlayer;
 		this.iaPlayer = (firstPlayer === 'J1') ? 'J2' : 'J1';
-    this.memento = new Memento(); //initialized this variable before initGame
+        this.memento = new Memento(); //initialized this variable before initGame
 		this.initGame();
 	}
 
@@ -29,7 +29,7 @@ class Morpion {
             console.log(this.gridMap);
             this.gridMap.forEach((line, y) => {
                 line.forEach((cell, x) => {
-                    console.log(cell,x,y);
+                    // console.log(cell,x,y);
                     let player = cell
                     this.getCell(x, y).classList.add(`filled-${player}`);
                     });
@@ -126,47 +126,12 @@ class Morpion {
 		return document.getElementById(cellId);
 	}
 
-    getBoardWinner = (board) => { //ici on cherche le gagnant => le fonction retourne soit : tie, iaPlayer ou humanPlayer
-        const isWinningRow = ([a, b, c]) => (
-            a !== null && a === b && b === c
-        );
-
-        let winner = null;
-
-        // Horizontal
-        board.forEach((line) => {
-            if (isWinningRow(line)) {
-                winner = line[0];
-            }
-        });
-
-        // Vertical
-        [0, 1, 2].forEach((col) => {
-            if (isWinningRow([board[0][col], board[1][col], board[2][col]])) {
-                winner = board[0][col];
-            }
-        });
-
-        if (winner) {
-            return winner;
-        }
-
-        // Diagonal
-        const diagonal1 = [board[0][0], board[1][1], board[2][2]];
-        const diagonal2 = [board[0][2], board[1][1], board[2][0]];
-        if (isWinningRow(diagonal1) || isWinningRow(diagonal2)) {
-            return board[1][1];
-        }
-
-        const isFull = board.every((line) => (
-			line.every((cell) => cell !== null)
-		));
-        return isFull ? 'tie' : null;
-    }
+    
 
 	checkWinner = (lastPlayer) => { //vérifier s'il y a un gagnant
         
-        const winner = this.getBoardWinner(this.gridMap);
+        const winnerChecker = new GetBoardWinner();
+        const winner = winnerChecker.getBoardWinner(this.gridMap);
         if (!winner) {
             return;
         }
@@ -282,17 +247,18 @@ class Morpion {
         let x, y;
         let easyDifficulty = new EasyDifficulty();
         let mediumDifficulty = new MediumDifficulty();
-        // let hardDifficulty = new HardDifficulty();
+        let hardDifficulty = new HardDifficulty( this.humanPlayer, this.iaPlayer);
         switch(this.difficulty){
             case "easy":
                 ({ x, y } = easyDifficulty.getRandomCoordinates(this.gridMap))
                 break;
             case "medium":
-                // ({ x, y } = this.medium(this.gridMap))
                 ({ x, y } = mediumDifficulty.getCoordinates(this.gridMap))
                 break;
             case "hard":
-                ({ x, y } = this.minmax(this.gridMap, 0, -Infinity, Infinity, true))
+                // ({ x, y } = this.minmax(this.gridMap, 0, -Infinity, Infinity, true))
+                console.log("hard");
+                ({ x, y } = hardDifficulty.minmax(this.gridMap, 0, -Infinity, Infinity, true))
                 break;
             default:
                 console.log("unknown difficulty"); //difficulty hard by default
@@ -302,134 +268,133 @@ class Morpion {
         // console.log("fin ia turn");
 	}
 
-    // checkDoublePion = (board) => {
-    //     let x,y;
-    //     const isWinningRow = (row) => {
-    //         if(row[0] === row[1] && row[0] !== null && row[2] === null) return 2;
-    //         if(row[0] === row[2] && row[0] !== null && row[1] === null) return 1;
-    //         if(row[1] === row[2] && row[1] !== null && row[0] === null) return 0;
-    //         return -1;
+    // minmax = (board, depth, alpha, beta, isMaximizing) => {
+    //     // Return a score when there is a winner
+    //     const winner = this.getBoardWinner(board);
+    //     if (winner === this.iaPlayer) {
+    //         return 10 - depth;
+    //     }
+    //     if (winner === this.humanPlayer) {
+    //         return depth - 10;
+    //     }
+    //     if (winner === 'tie' && this.turn === 9) {
+    //         return 0;
+    //     }
+
+    //     const getSimulatedScore = (x, y, player) => {
+    //         board[y][x] = player;
+    //         this.turn += 1;
+
+    //         const score = this.minmax(
+    //             board,
+    //             depth + 1,
+    //             alpha,
+    //             beta,
+    //             player === this.humanPlayer
+    //         );
+
+    //         board[y][x] = null;
+    //         this.turn -= 1;
+
+    //         return score;
     //     };
-    
-    //     // Horizontal
-    //     for(let y = 0; y < 3; y++) {
-    //         let x = isWinningRow(board[y]);
-    //         if(x !== -1) return {x, y};
+
+    //     // This tree is going to test every move still possible in game
+    //     // and suppose that the 2 players will always play there best move.
+    //     // The IA search for its best move by testing every combinations,
+    //     // and affects score to every node of the tree.
+    //     if (isMaximizing) {
+    //         // The higher is the score, the better is the move for the IA.
+    //         let bestIaScore = -Infinity;
+    //         let optimalMove;
+    //         for (const y of [0, 1, 2]) {
+    //             for (const x of [0, 1, 2]) {
+    //                 if (board[y][x]) {
+    //                     continue;
+    //                 }
+
+    //                 const score = getSimulatedScore(x, y, this.iaPlayer);
+    //                 if (score > bestIaScore) {
+    //                     bestIaScore = score;
+    //                     optimalMove = { x, y };
+    //                 }
+
+    //                 // clear useless branch of the algorithm tree
+    //                 // (optional but recommended)
+    //                 alpha = Math.max(alpha, score);
+    //                 if (beta <= alpha) {
+    //                     break;
+    //                 }
+    //             }
+    //         }
+
+    //         return (depth === 0) ? optimalMove : bestIaScore;
     //     }
-    
-    //     // Vertical
-    //     for(let x = 0; x < 3; x++) {
-    //         let y = isWinningRow([board[0][x], board[1][x], board[2][x]]);
-    //         if(y !== -1) return {x, y};
+
+    //     // The lower is the score, the better is the move for the player.
+    //     let bestHumanScore = Infinity;
+    //     for (const y of [0, 1, 2]) {
+    //         for (const x of [0, 1, 2]) {
+    //             if (board[y][x]) {
+    //                 continue;
+    //             }
+
+    //             const score = getSimulatedScore(x, y, this.humanPlayer);
+    //             bestHumanScore = Math.min(bestHumanScore, score);
+
+    //             // clear useless branch of the algorithm tree
+    //             // (optional but recommended)
+    //             beta = Math.min(beta, score);
+    //             if (beta <= alpha) {
+    //                 break;
+    //             }
+    //         }
     //     }
 
-    //     // Diagonal
-    //     const diagonal1 = [board[0][0], board[1][1], board[2][2]];
-    //     const diagonal2 = [board[0][2], board[1][1], board[2][0]];
-    //     let diag = isWinningRow(diagonal1);
-    //     if(diag !== -1) return {x: diag, y: diag};
-
-    //     diag = isWinningRow(diagonal2);
-    //     if(diag !== -1) return {x: 2 - diag, y: diag};
-
-    //     // If no winning move is found, return null
-    //     return null;
+    //     return bestHumanScore;
     // }
-    // medium = (board) => {
-    //     const winningMove = this.checkDoublePion(board);
-    //     if(winningMove) {
-    //         return winningMove;
-    //     } else {
-    //         return this.easy(board);
-    //     }
-    // }
-
-    minmax = (board, depth, alpha, beta, isMaximizing) => {
-        // Return a score when there is a winner
-        const winner = this.getBoardWinner(board);
-        if (winner === this.iaPlayer) {
-            return 10 - depth;
-        }
-        if (winner === this.humanPlayer) {
-            return depth - 10;
-        }
-        if (winner === 'tie' && this.turn === 9) {
-            return 0;
-        }
-
-        const getSimulatedScore = (x, y, player) => {
-            board[y][x] = player;
-            this.turn += 1;
-
-            const score = this.minmax(
-                board,
-                depth + 1,
-                alpha,
-                beta,
-                player === this.humanPlayer
-            );
-
-            board[y][x] = null;
-            this.turn -= 1;
-
-            return score;
-        };
-
-        // This tree is going to test every move still possible in game
-        // and suppose that the 2 players will always play there best move.
-        // The IA search for its best move by testing every combinations,
-        // and affects score to every node of the tree.
-        if (isMaximizing) {
-            // The higher is the score, the better is the move for the IA.
-            let bestIaScore = -Infinity;
-            let optimalMove;
-            for (const y of [0, 1, 2]) {
-                for (const x of [0, 1, 2]) {
-                    if (board[y][x]) {
-                        continue;
-                    }
-
-                    const score = getSimulatedScore(x, y, this.iaPlayer);
-                    if (score > bestIaScore) {
-                        bestIaScore = score;
-                        optimalMove = { x, y };
-                    }
-
-                    // clear useless branch of the algorithm tree
-                    // (optional but recommended)
-                    alpha = Math.max(alpha, score);
-                    if (beta <= alpha) {
-                        break;
-                    }
-                }
-            }
-
-            return (depth === 0) ? optimalMove : bestIaScore;
-        }
-
-        // The lower is the score, the better is the move for the player.
-        let bestHumanScore = Infinity;
-        for (const y of [0, 1, 2]) {
-            for (const x of [0, 1, 2]) {
-                if (board[y][x]) {
-                    continue;
-                }
-
-                const score = getSimulatedScore(x, y, this.humanPlayer);
-                bestHumanScore = Math.min(bestHumanScore, score);
-
-                // clear useless branch of the algorithm tree
-                // (optional but recommended)
-                beta = Math.min(beta, score);
-                if (beta <= alpha) {
-                    break;
-                }
-            }
-        }
-
-        return bestHumanScore;
-    }
 };
+
+class GetBoardWinner {
+
+    getBoardWinner = (board) => { //ici on cherche le gagnant => le fonction retourne soit : tie, iaPlayer ou humanPlayer
+        const isWinningRow = ([a, b, c]) => (
+            a !== null && a === b && b === c
+        );
+
+        let winner = null;
+
+        // Horizontal
+        board.forEach((line) => {
+            if (isWinningRow(line)) {
+                winner = line[0];
+            }
+        });
+
+        // Vertical
+        [0, 1, 2].forEach((col) => {
+            if (isWinningRow([board[0][col], board[1][col], board[2][col]])) {
+                winner = board[0][col];
+            }
+        });
+
+        if (winner) {
+            return winner;
+        }
+
+        // Diagonal
+        const diagonal1 = [board[0][0], board[1][1], board[2][2]];
+        const diagonal2 = [board[0][2], board[1][1], board[2][0]];
+        if (isWinningRow(diagonal1) || isWinningRow(diagonal2)) {
+            return board[1][1];
+        }
+
+        const isFull = board.every((line) => (
+			line.every((cell) => cell !== null)
+		));
+        return isFull ? 'tie' : null;
+    }
+}
 
 class Memento {
     constructor() {
@@ -541,5 +506,102 @@ class MediumDifficulty extends EasyDifficulty {
         } else {
             return this.getRandomCoordinates(board);
         }
+    }
+}
+
+class HardDifficulty {
+    constructor(iaPlayer, humanPlayer) {
+        this.iaPlayer = iaPlayer;
+        this.humanPlayer = humanPlayer;
+        
+    }
+
+    minmax = (board, depth, alpha, beta, isMaximizing) => {
+        // console.log("hard");
+        // Return a score when there is a winner
+
+        const winnerChecker = new GetBoardWinner();
+        const winner = winnerChecker.getBoardWinner(board);
+        if (winner === this.iaPlayer) {
+            return 10 - depth;
+        }
+        if (winner === this.humanPlayer) {
+            return depth - 10;
+        }
+        if (winner === 'tie' && this.turn === 9) {
+            return 0;
+        }
+
+        const getSimulatedScore = (x, y, player) => {
+            board[y][x] = player;
+            this.turn += 1;
+
+            const score = this.minmax(
+                board,
+                depth + 1,
+                alpha,
+                beta,
+                player === this.humanPlayer
+            );
+
+            board[y][x] = null;
+            this.turn -= 1;
+
+            return score;
+        };
+
+        // This tree is going to test every move still possible in game
+        // and suppose that the 2 players will always play there best move.
+        // The IA search for its best move by testing every combinations,
+        // and affects score to every node of the tree.
+        if (isMaximizing) {
+            // The higher is the score, the better is the move for the IA.
+            let bestIaScore = -Infinity;
+            let optimalMove;
+            for (const y of [0, 1, 2]) {
+                for (const x of [0, 1, 2]) {
+                    if (board[y][x]) {
+                        continue;
+                    }
+
+                    const score = getSimulatedScore(x, y, this.iaPlayer);
+                    if (score > bestIaScore) {
+                        bestIaScore = score;
+                        optimalMove = { x, y };
+                    }
+
+                    // clear useless branch of the algorithm tree
+                    // (optional but recommended)
+                    alpha = Math.max(alpha, score);
+                    if (beta <= alpha) {
+                        break;
+                    }
+                }
+            }
+
+            return (depth === 0) ? optimalMove : bestIaScore;
+        }
+
+        // The lower is the score, the better is the move for the player.
+        let bestHumanScore = Infinity;
+        for (const y of [0, 1, 2]) {
+            for (const x of [0, 1, 2]) {
+                if (board[y][x]) {
+                    continue;
+                }
+
+                const score = getSimulatedScore(x, y, this.humanPlayer);
+                bestHumanScore = Math.min(bestHumanScore, score);
+
+                // clear useless branch of the algorithm tree
+                // (optional but recommended)
+                beta = Math.min(beta, score);
+                if (beta <= alpha) {
+                    break;
+                }
+            }
+        }
+
+        return bestHumanScore;
     }
 }
