@@ -17,6 +17,7 @@ class Morpion {
 		this.humanPlayer = firstPlayer;
 		this.iaPlayer = (firstPlayer === 'J1') ? 'J2' : 'J1';
 		this.initGame();
+        this.memento = new Memento();
 	}
 
 	initGame = () => {
@@ -203,13 +204,22 @@ class Morpion {
         // console.log("gridmap :");
         // console.log(this.gridMap);
 
-        this.saveHistory(this.turn, x,y,player)
-        console.log("history :");
-        console.log(this.history);
+        // this.saveHistory(this.turn, x,y,player)
+        // console.log("history :");
+        // console.log(this.history);
 
         this.turn += 1;
 		this.getCell(x, y).classList.add(`filled-${player}`);
 		this.checkWinner(player);
+
+        //save history in memento
+        this.memento.addElement({turn:this.turn,
+            x:x,
+            y:y,
+            player:player
+        })
+
+        console.log(this.memento);
 
         //save in localStorage if the game is not over in order to resume the game
         if (!this.gameOver) {
@@ -246,21 +256,30 @@ class Morpion {
 
 
     undo = () => {
-        
+        for (let i=0;i<=1;i++){
         // console.log("dans undo");
         // console.log(this.history.length);
+        this.turn -= 1;
         console.log("actual turn :", this.turn);
+        let data = this.memento.undo()
+        let x = data.x
+        let y = data.y
+        let player = data.player
+        console.log("previous move :", "x :",x, "y :",y);
+        this.gridMap[y][x] = null //delete previous move in the right cell
+        this.getCell(x, y).classList.remove(`filled-${player}`); //change previous cell display
 
-        if(this.history.length > 0 && this.turn > 0){
-            this.turn -= 1;
-            let x = this.history[this.turn].x
-            let y = this.history[this.turn].y
-            let player = this.history[this.turn].player
-            console.log("previous move :", "x :",x, "y :",y);
-            this.gridMap[y][x] = null //delete previous move in the right cell
-            this.getCell(x, y).classList.remove(`filled-${player}`); //change previous cell display
-            console.log("history :");
-            console.log(this.history);
+        // if(this.history.length > 0 && this.turn > 0){
+        //     this.turn -= 1;
+        //     let x = this.history[this.turn].x
+        //     let y = this.history[this.turn].y
+        //     let player = this.history[this.turn].player
+        //     console.log("previous move :", "x :",x, "y :",y);
+        //     this.gridMap[y][x] = null //delete previous move in the right cell
+        //     this.getCell(x, y).classList.remove(`filled-${player}`); //change previous cell display
+        //     console.log("history :");
+        //     console.log(this.history);
+        // }
         }
     }
 
@@ -458,3 +477,40 @@ class Morpion {
         return bestHumanScore;
     }
 };
+
+class Memento {
+    constructor() {
+        this.values = [];
+        this.index = 0;
+        this.isUndo = false;
+    }
+
+    addElement = (element) => {
+        if(this.isUndo){
+            this.isUndo = false;
+            this.values.splice(this.index, this.values.length); //On supprime tout ce qu'il y a après notre index
+        } else {
+            this.values.splice(this.index + 1, this.values.length); //On supprime tout ce qu'il y a après notre index
+        }
+        this.values.push(JSON.stringify(element));
+        this.index++;
+    }
+
+    undo = () => {
+        console.log("je suis dans undo");
+        if (this.index <= 0) {
+            return false;
+        }
+        this.index--;
+        this.isUndo = true;
+        return JSON.parse(this.values[this.index]);
+    }
+
+    redo = () => {
+        if (this.index >= values.length) {
+            return false;
+        }
+        this.index++;
+        return JSON.parse(this.values[this.index]);
+    }
+}
